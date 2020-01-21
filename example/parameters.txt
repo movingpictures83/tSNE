@@ -1,0 +1,2 @@
+input1	plugins/tSNE/example/healthy.csv	
+input2	plugins/tSNE/example/diseased.csv
