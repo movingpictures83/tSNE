@@ -36,6 +36,8 @@ run <- function() {
 #######
 # tSNE#
 #######
+print(data_t)
+print(names_t)
 data.tsne <<- tsne(data_t)
 
    
