@@ -2,7 +2,8 @@
 # Language: R
 # Input: TXT (key, value pairs)
 # Output: CSV
-# Tested with: PluMA 1.0, R 3.2.5
+# Tested with: PluMA 1.1, R 4.0.0
+# Dependency: tsne_0.1.3
 
 PluMA plugin to run t-Distributed Stochastic Neighbor Embedding Classifier
 (van der Maaten et al, 2008) to determine, given
