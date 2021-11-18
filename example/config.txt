@@ -1,2 +1,2 @@
-Prefix plugins/tSNE/example/
-Plugin tSNE inputfile parameters.txt outputfile output.tsne.csv
+Prefix plugins/tSNE/example
+Plugin tSNE inputfile parameters.txt outputfile output.pdf

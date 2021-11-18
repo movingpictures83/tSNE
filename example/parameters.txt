@@ -1,2 +1,6 @@
-input1	plugins/tSNE/example/healthy.csv	
-input2	plugins/tSNE/example/diseased.csv
+csvfile	mydata.csv
+features	features.txt
+categories	catfiles.txt
+variables	12
+perplexity	10
+theta	0

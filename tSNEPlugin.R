@@ -1,85 +1,69 @@
-# Clear R workspace
-#rm(list=ls(all=TRUE))
-#library(ggbiplot)
-library(tsne)
+library(ggplot2)
+library(ggrepel)
+library(cowplot)
+library(plspm)
+library(Rtsne)
+
+dyn.load(paste("RPluMA", .Platform$dynlib.ext, sep=""))
+source("RPluMA.R")
 
 input <- function(inputfile) {
   parameters <<- read.table(inputfile, as.is=T);
-  rownames(parameters) <<- parameters[,1]
-  group <<- c()
-  #legend <<- c()
-  doGroups <<- "false";
-  data1 <<- c()
-  data2 <<- c()
-  data1 <<- read.csv(toString(parameters["input1",2]), header=T, row.names=1)
-  for (i in 1:nrow(data1)) {
-     group <<- rbind(group, "A - Healthy")
-     #legend <<- rbind(legend,1)
+  rownames(parameters) <<- parameters[,1];
+    pfix = prefix()
+  if (length(pfix) != 0) {
+     pfix <- paste(pfix, "/", sep="")
   }
-  if (is.na(parameters["input2", 2])) {
-     data_t <<- data.frame(data1);
-  }
-  else {
-     data2 <<- read.csv(toString(parameters["input2",2]), header=T, row.names=1)
-     for (i in 1:nrow(data2)) {
-        group <<- rbind(group, "B - Disease")
-        doGroups <<- "true";
-        #legend <<- rbind(legend,1)
-     }
-  }
-  data_t <<- data.frame(rbind(data1, data2))
-  names_t <<- rownames(data_t)#c()
+
+mydata <- read.csv(paste(pfix, parameters["csvfile", 2], sep="/"))
+mydata <- as.data.frame(mydata)
+numeric_vars <- readLines(paste(pfix, parameters["features", 2], sep="/"))
+
+mydata_num <<- mydata[, numeric_vars]
+mydata_num$classification <<- "normal"
+
+parameters_cats <<- read.table(paste(pfix, parameters["categories", 2], sep="/"), as.is=T);
+cats <- c()
+for (i in 1:nrow(parameters_cats)) {
+   cat_samples <- readLines(paste(pfix, parameters_cats[i,2], sep="/"))
+   cats <- c(cats, cat_samples)
+   mydata_num$classification[match(cat_samples, rownames(mydata_num))] <<- parameters_cats[i,1]
 }
 
+print(rownames(mydata))
+print(cats)
+mydata_num_sub <<- match(
+  cats,
+  rownames(mydata_num)
+)
 
-run <- function() {
-#######
-# tSNE#
-#######
-print(data_t)
-print(names_t)
-data.tsne <<- tsne(data_t)
+mydata_num$label <<- ""
+mydata_num$label[mydata_num_sub] <<- rownames(mydata_num)[mydata_num_sub]
 
-   
+#thecols <<- readLines(paste(pfix, parameters["columns", 2], sep="/"))
 }
+
+run <- function() {}
 
 output <- function(outputfile) {
-   #plot(data.pca, type="lines", file=toString(parameters["varianceplot",2]))
-   #write.csv(data.pca$x, toString(parameters["plotdata",2]))
-   #write.csv(data.pca$rotation, toString(parameters["rotationdata",2]))
-   #plot(data.pca, type="lines", file=paste(outputfile, ".variance.pdf", sep=""))
-   write.csv(data.tsne, file=outputfile)
-   #write.csv(data.pca$rotation, file=paste(outputfile, ".rotation.csv", sep=""))
+tsne_data_num <- Rtsne(mydata_num[, 1:as.integer(parameters["variables", 2])],
+  pca = FALSE, perplexity = as.integer(parameters["perplexity", 2]),
+  theta = as.numeric(parameters["theta", 2])
+)
 
-   #dpi=600
-   #pdf(file=paste(outputfile, ".graph.pdf", sep=""))
-   #if (doGroups == "true") {
-   #g <- ggbiplot(data.pca, obs.scale = 1, var.scale = 1,
-   #            ellipse = TRUE, ellipse.prob = 0.80, groups=group,
-   #            labels = names_t, 
-   #            circle = FALSE, var.axes=FALSE, alpha=0)
-   # g <- g + geom_point(aes(shape=groups,colour=groups),size = 4)
-   # g <- g + theme(legend.direction = 'horizontal', 
-   #             legend.position = 'top')
-   # g <- g + scale_color_manual(name='Class', values=c('#9900ff','#0000ff','#009933', '#000000', '#ff0000'))
-   # g <- g + scale_shape(name='Class')
-   #} 
-   #else {
-   #g <- ggbiplot(data.pca)
-   #   b <- data.pca$rotation[2,"PC1"] / data.pca$rotation[1,"PC1"]
-   #   #plot(0,b);
-   #   a <- as.numeric(data.pca$center[2]) - (b*as.numeric(data.pca$center[1]))
-   #   g <- g + geom_abline(slope=a,intercept=b,col="red");
-#
-#      b2 <- data.pca$rotation[1,"PC2"] / data.pca$rotation[2,"PC2"]
-#      #plot(0,b2);
-#      a2 <- as.numeric(data.pca$center[2]) - (b2*as.numeric(data.pca$center[1]))
-#      g <- g + geom_abline(slope=a2,intercept=b2,col="blue")
-#      print(b);
-#      print(a);
-#      print(b2);
-#      print(a2);
-#   }
-#   ggsave(filename=paste(outputfile, ".graph.pdf", sep=""), plot=g, device="pdf");
-   #dev.off();
+tsne_data_num <- data.frame(
+  TSNE1 = tsne_data_num$Y[, 1],
+  TSNE2 = tsne_data_num$Y[, 2],
+  label = mydata_num$label,
+  classification = mydata_num$classification
+)
+
+yy <<- ggplot(tsne_data_num, aes(
+  x = TSNE1, y = TSNE2,
+  label = label, col = classification
+)) +
+  geom_point()
+	
+	write.csv(yy$label, paste(outputfile, "csv", sep="."))
+ggsave(outputfile)
 }
