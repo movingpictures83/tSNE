@@ -15,10 +15,9 @@ input <- function(inputfile) {
      pfix <- paste(pfix, "/", sep="")
   }
 
-mydata <- read.csv(paste(pfix, parameters["csvfile", 2], sep="/"))
+mydata <- read.csv(paste(pfix, parameters["csvfile", 2], sep="/"), check.names=FALSE)
 mydata <- as.data.frame(mydata)
 numeric_vars <- readLines(paste(pfix, parameters["features", 2], sep="/"))
-
 mydata_num <<- mydata[, numeric_vars]
 mydata_num$classification <<- "normal"
 
@@ -30,8 +29,6 @@ for (i in 1:nrow(parameters_cats)) {
    mydata_num$classification[match(cat_samples, rownames(mydata_num))] <<- parameters_cats[i,1]
 }
 
-print(rownames(mydata))
-print(cats)
 mydata_num_sub <<- match(
   cats,
   rownames(mydata_num)
